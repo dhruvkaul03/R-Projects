@@ -1,0 +1,5 @@
+"0","# Checking for missing values"
+"0","data %>%"
+"0","    dplyr::select(everything()) %>%"
+"0","    summarize_all(~sum(is.na(.))) %>%"
+"0","    print(width = Inf)"

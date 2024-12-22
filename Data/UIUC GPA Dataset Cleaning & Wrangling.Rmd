@@ -1,0 +1,288 @@
+---
+title: "UIUC GPA Dataset Cleaning and Wrangling"
+author: "Dhruv Kaul"
+date: "2024-12-15"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Data Sources
+* Data downloaded from: https://github.com/wadefagen/datasets/blob/main/gpa/uiuc-gpa-dataset.csv
+
+## Datasets
+### Dataset 1: uiuc-gpa-dataset
+Dataset 1: uiuc-gpa-dataset  
+UIUC GPA Dataset. The variables are:
+
+- **Year**: Year the course was taken (2010-2024)  
+- **Term**: The term the course was taken (Spring, Fall, Winter, Summer)  
+- **YearTerm**: Combination of the year and term the course was taken  
+- **Subject**: Abbreviation of the course subject  
+- **Number**: Course number  
+- **Course Title**: Title of the course  
+- **Sched Type**: The schedule type (e.g., “DIS” for discussion, “LEC” for lecture, “ONL” for online)  
+- **A+ to F**: The number of students that received the respective grade in the course  
+- **W**: The number of students that withdrew from the course  
+- **Primary Instructor**: The name of the primary instructor of the course  
+
+## Data Cleaning & Wrangling
+```{r, eval=FALSE}
+setwd("C:\\Users\\dhruv\\OneDrive\\Desktop\\Data")
+```
+
+```{r}
+# Loading Libraries & Datasets
+library(tidyverse)
+
+data = read_csv("Original Data/uiuc-gpa-dataset.csv")
+```
+```{r}
+# Checking for missing values
+data %>%
+    dplyr::select(everything()) %>%
+    summarize_all(~sum(is.na(.))) %>%
+    print(width = Inf)
+```
+As we can see, there are missing values in the following columns: "Sched Type", and "Primary Instructor". Usually, we would drop these missing values, however, since our goal with this data is to view the different GPA ranges for each subject, we will take care of these missing values in the next step where we drop any unnecessary columns from the data set. 
+
+```{r}
+print(names(data))
+```
+
+```{r}
+# Dropping unnecessary columns
+clean_data = data %>%
+  filter(Year == 2024) %>%
+  select(-`YearTerm`, -`Primary Instructor`, -`Sched Type`)
+
+# Re-check for missing values
+clean_data %>%
+    dplyr::select(everything()) %>%
+    summarize_all(~sum(is.na(.))) %>%
+    print(width = Inf)
+```
+```{r}
+# Create a new variable for the GPA for each observation (course)
+grade_weights = c("A+" = 4.0, "A" = 4.0, "A-" = 3.67,
+                  "B+" = 3.33, "B" = 3.0, "B-" = 2.67,
+                  "C+" = 3.33, "C" = 2.0, "C-" = 1.67,
+                  "D+" = 1.33, "D" = 1.0, "D-" = 0.67,
+                  "F" = 0.00
+)
+
+# Calculate the sum of each grade
+clean_data = clean_data %>%
+  mutate(
+    Sum_of_Each_Grade = rowSums(select(., `A+`:`F`)),
+    GPA = (
+      `A+` * grade_weights["A+"] +
+      `A` * grade_weights["A"] +
+      `A-` * grade_weights["A-"] +
+      `B+` * grade_weights["B+"] +
+      `B` * grade_weights["B"] +
+      `B-` * grade_weights["B-"] +
+      `C+` * grade_weights["C+"] +
+      `C` * grade_weights["C"] +
+      `C-` * grade_weights["C-"] +
+      `D+` * grade_weights["D+"] +
+      `D` * grade_weights["D"] +
+      `D-` * grade_weights["D-"] +
+      `F` * grade_weights["F"]
+    ) / Sum_of_Each_Grade,
+    
+    # Create a new variable "Level", which will be the color variable
+    Level = ifelse(Number >= 100 & Number <= 199, "100 Level Courses",
+             ifelse(Number >= 200 & Number <= 299, "200 Level Courses",
+             ifelse(Number >= 300 & Number <= 399, "300 Level Courses",
+             ifelse(Number >= 400 & Number <= 499, "400 Level Courses", 
+             ifelse(Number >= 500, "500+", "500 Level Courses")))))
+  )
+```
+```{r}
+# Create a new variable "Subject Full Title"
+# This will be displayed in the app so users can search for the subject abbreviation for specific courses
+subject_mapping = c(
+  "AAS" = "Asian American Studies",
+  "ABE" = "Agricultural and Biological Eng",
+  "ACCY" = "Accountancy",
+  "ACE" = "Agr & Consumer Economics",
+  "ACES" = "Agr, Consumer, & Env Sciences",
+  "ADV" = "Advertising",
+  "AE" = "Aerospace Engineering",
+  "AFRO" = "African American Studies",
+  "AGCM" = "Agricultural Communications",
+  "AHS" = "Applied Health Sci Courses",
+  "AIS" = "American Indian Studies",
+  "ALEC" = "Agricultural Leadership, Education, & Communications Program",
+  "ANSC" = "Animal Sciences",
+  "ANTH" = "Anthropology",
+  "ARCH" = "Architecture",
+  "ART" = "Art",
+  "ARTD" = "Art Design",
+  "ARTE" = "Art Education",
+  "ARTH" = "Art History",
+  "ARTJ" = "Japanese Arts and Aesthetics",
+  "ARTS" = "Art Studio",
+  "ASRM" = "Actuarial Science & Risk Management",
+  "ASTR" = "Astronomy",
+  "ATMS" = "Atmospheric Sciences",
+  "BADM" = "Business Administration",
+  "BCOG" = "Brain and Cognitive Science",
+  "BCS" = "Bosnian-Croatian-Serbian",
+  "BDI" = "Business Data & Innovation",
+  "BIOC" = "Biochemistry",
+  "BIOE" = "Bioengineering",
+  "BTW" = "Business and Technical Writing",
+  "BUS" = "Business",
+  "CEE" = "Civil and Environ Engineering",
+  "CHBE" = "Chemical and Biomolecular Engineering",
+  "CHEM" = "Chemistry",
+  "CHLH" = "Community Health",
+  "CI" = "Curriculum and Instruction",
+  "CLCV" = "Classical Civilization",
+  "CMN" = "Communication",
+  "CPSC" = "Crop Sciences",
+  "CS" = "Computer Science",
+  "CW" = "Creative Writing",
+  "CWL" = "Comparative & World Literature",
+  "DANC" = "Dance",
+  "DTX" = "Human-Centered Design & Design Thinking",
+  "EALC" = "East Asian Languages & Cultures",
+  "ECE" = "Electrical and Computer Engineering",
+  "ECON" = "Economics",
+  "EDUC" = "Education",
+  "ENG" = "Engineering",
+  "ENGL" = "English",
+  "ENVS" = "Environmental Studies",
+  "EPOL" = "Ed Policy, Org & Leadership",
+  "EPSY" = "Educational Psychology",
+  "ESE" = "Earth, Society, & Environment",
+  "ETMA" = "Engineering Technology & Management for Agricultural Systems",
+  "EURO" = "European Union Studies",
+  "FAA" = "Fine and Applied Arts",
+  "FIN" = "Finance",
+  "FR" = "French",
+  "FSHN" = "Food Science & Human Nutrition",
+  "GEOL" = "Geology",
+  "GER" = "German",
+  "GGIS" = "Geography & Geographic Information Science",
+  "GLBL" = "Global Studies",
+  "GS" = "General Studies",
+  "GSD" = "Game Studies and Design",
+  "GWS" = "Gender and Women's Studies",
+  "HDFS" = "Human Dev and Family Studies",
+  "HIST" = "History",
+  "HORT" = "Horticulture",
+  "IB" = "Integrative Biology",
+  "IE" = "Industrial Engineering",
+  "IHLT" = "I-Health",
+  "INFO" = "Informatics",
+  "IS" = "Information Sciences",
+  "JOUR" = "Journalism",
+  "KIN" = "Kinesiology",
+  "LA" = "Landscape Architecture",
+  "LAS" = "Liberal Arts and Sciences",
+  "LAST" = "Latin American & Caribbean St",
+  "LAW" = "Law",
+  "LEAD" = "Organizational & Community Leadership",
+  "LER" = "Labor and Employment Relations",
+  "LING" = "Linguistics",
+  "LLS" = "Latina/Latino Studies",
+  "MACS" = "Media and Cinema Studies",
+  "MATH" = "Mathematics",
+  "MBA" = "MBA Program",
+  "MCB" = "Molecular and Cell Biology",
+  "ME" = "Mechanical Engineering",
+  "MSE" = "Materials Science & Engineering",
+  "MUS" = "Music",
+  "MUSC" = "Music Lessons and Ensembles",
+  "MUSE" = "Museum Studies",
+  "NPRE" = "Nuclear, Plasma, Radiological Engineering",
+  "NRES" = "Natural Resources & Environ Sc",
+  "PHIL" = "Philosophy",
+  "PHYS" = "Physics",
+  "PLPA" = "Plant Pathology",
+  "POL" = "Polish",
+  "PORT" = "Portuguese",
+  "PS" = "Political Science",
+  "PSYC" = "Psychology",
+  "REHB" = "Rehabilitation Counseling",
+  "REL" = "Religion",
+  "RHET" = "Rhetoric and Composition",
+  "RST" = "Recreation, Sport, and Tourism",
+  "RUSS" = "Russian",
+  "SBC" = "Strategic Brand Communication",
+  "SCAN" = "Scandinavian",
+  "SE" = "Systems Engineering and Design",
+  "SHS" = "Speech and Hearing Science",
+  "SLCL" = "Literatures Cultures Linguistics",
+  "SOC" = "Sociology",
+  "SOCW" = "Social Work",
+  "SPAN" = "Spanish",
+  "SPED" = "Special Education",
+  "STAT" = "Statistics",
+  "TAM" = "Theoretical and Applied Mechanics",
+  "TE" = "Technology Entrepreneurship",
+  "THEA" = "Theatre",
+  "UP" = "Urban and Regional Planning",
+  "VCM" = "Veterinary Clinical Medicine",
+  "VM" = "Veterinary Medicine Courses"
+)
+
+clean_data <- clean_data %>%
+  mutate(
+    `Subject Full Title` = subject_mapping[Subject]
+  )
+```
+
+```{r}
+# Get rid of any unneeded columns
+final_data = clean_data %>%
+  select(-`A+`, -`A`, -`A-`, -`B+`, -`B`, -`B-`, -`C+`, -`C`, -`C-`, -`D+`, -`D`, -`D-`, -`F`, -`W`,
+         -`Sum_of_Each_Grade`, -`Term`)
+
+head(final_data)
+
+# Check the number of features and samples for the "About" tab
+dim(final_data)
+```
+
+```{r}
+# Save the final, cleaned data set as a new .csv file
+write_csv(final_data, "UIUC Subjects by GPA.csv")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

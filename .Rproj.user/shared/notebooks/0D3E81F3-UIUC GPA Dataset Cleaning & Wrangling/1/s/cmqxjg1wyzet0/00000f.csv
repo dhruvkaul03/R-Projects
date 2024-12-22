@@ -1,0 +1,6 @@
+"0","# Get rid of any unneeded columns"
+"0","final_data = clean_data %>%"
+"0","  select(-`A+`, -`A`, -`A-`, -`B+`, -`B`, -`B-`, -`C+`, -`C`, -`C-`, -`D+`, -`D`, -`D-`, -`F`, -`W`,"
+"0","         -`Sum_of_Each_Grade`, -`Term`)"
+"0",""
+"0","head(final_data)"
