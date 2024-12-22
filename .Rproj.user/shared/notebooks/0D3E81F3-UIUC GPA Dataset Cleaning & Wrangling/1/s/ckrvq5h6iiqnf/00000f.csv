@@ -1,2 +1,0 @@
-"0","# Save the final, cleaned data set as a new .csv file"
-"0","write_csv(final_data, ""UIUC Subjects by GPA.csv"")"

@@ -1,2 +1,0 @@
-"0","setwd(""C:\\Users\\dhruv\\OneDrive\\Desktop\\Data"")"
-"2","Warning: The working directory was changed to C:/Users/dhruv/OneDrive/Desktop/Data inside a notebook chunk. The working directory will be reset when the chunk is finished running. Use the knitr root.dir option in the setup chunk to change the working directory for notebook chunks."
