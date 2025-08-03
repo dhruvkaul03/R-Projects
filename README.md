@@ -28,6 +28,6 @@ This app enables users to explore GPA trends across departments and course level
 
 ## 🖼️ Preview
 
-**Demo coming soon.** Screenshot and deployment link will be added once access is restored.
+**Demo coming soon.** Screenshot and deployment link will be added.
 
 ---
